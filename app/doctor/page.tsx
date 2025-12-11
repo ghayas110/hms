@@ -42,12 +42,7 @@ export default function DoctorDashboard() {
           <h1 className="text-3xl font-bold tracking-tight">Doctor Dashboard</h1>
           <p className="text-slate-500 dark:text-slate-400">Welcome back, Dr. Smith</p>
         </div>
-        <div className="flex gap-4">
-            <Link href="/doctor/schedule" className="px-4 py-2 bg-white border rounded-md hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-800">
-                Manage Schedule
-            </Link>
-            <LogoutButton />
-        </div>
+      
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">

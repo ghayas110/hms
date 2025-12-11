@@ -149,20 +149,7 @@ export function Sidebar({ className, role = "patient" }: SidebarProps) {
       {/* Footer / Settings */}
       <div className="p-3 border-t bg-slate-50/50 dark:bg-slate-900/50">
         <div className="space-y-1">
-             <Link 
-               href="/settings"
-               title="Settings"
-               className={`flex items-center rounded-lg transition-colors ${
-                 isCollapsed ? "justify-center p-3" : "px-4 py-2.5"
-               } ${
-                 pathname === "/settings" 
-                   ? "bg-slate-200 text-slate-900 dark:bg-slate-800 dark:text-slate-50" 
-                   : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-50"
-               }`}
-             >
-               <Settings className={`${isCollapsed ? "h-6 w-6" : "h-5 w-5 mr-3"}`} />
-               {!isCollapsed && <span className="text-sm font-medium">Settings</span>}
-             </Link>
+            
              
              <button 
                 onClick={handleLogout}

@@ -145,8 +145,16 @@ export default function LabResultsPage() {
                     </Button>
                </div>
 
+
+               <style type="text/css" media="print">
+                   {`
+                   @page { size: auto; margin: 20mm; }
+                   `}
+               </style>
+
                {/* Printable Report Area */}
-               <div ref={reportRef} className="bg-white p-8 rounded-lg text-slate-900 border border-slate-200 shadow-sm print:shadow-none print:border-0 print:p-0 print:m-0">
+               <div ref={reportRef} className="bg-white p-8 rounded-lg text-slate-900 border border-slate-200 shadow-sm print:shadow-none print:border-0 print:p-0">
+
                     {/* Header */}
                     <div className="flex justify-between items-start mb-6 pb-4 border-b-2 border-teal-600">
                         <div>
