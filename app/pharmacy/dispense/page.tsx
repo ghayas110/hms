@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
+import { useReactToPrint } from "react-to-print"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,6 +21,14 @@ import {
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 
+
+interface InvoiceLine {
+    name: string;
+    quantity: number;
+    unitPrice: number;
+    total: number;
+    found: boolean;
+}
 
 export default function PharmacyDispensePage() {
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([])
@@ -41,6 +50,19 @@ export default function PharmacyDispensePage() {
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false)
   const [invoiceAmount, setInvoiceAmount] = useState("")
   const [creatingInvoice, setCreatingInvoice] = useState(false)
+  
+  // New State for Invoice Calculation
+  const [invoiceLines, setInvoiceLines] = useState<InvoiceLine[]>([])
+  const [calculatingInvoice, setCalculatingInvoice] = useState(false)
+  
+  // Print Logic
+  const invoiceRef = useRef<HTMLDivElement>(null)
+  const [lastInvoiceId, setLastInvoiceId] = useState<number | null>(null)
+  
+  const handlePrintInvoice = useReactToPrint({
+      contentRef: invoiceRef,
+      documentTitle: `Invoice_${selectedPrescription?.Appointment?.patient?.name || 'Patient'}_${new Date().toLocaleDateString()}`
+  })
 
   useEffect(() => {
     loadData()
@@ -58,18 +80,74 @@ export default function PharmacyDispensePage() {
     }
   }
 
-  const handleDispense = async (id: number) => {
-      if (!window.confirm("Confirm dispense and stock deduction?")) return
-      
+  // Modified handleOpenInvoice to accept an optional prescription argument
+  // to support calling from the card button directly
+  const handleOpenInvoice = async (prescriptionOverride?: Prescription) => {
+       const targetPrescription = prescriptionOverride || selectedPrescription
+       if (!targetPrescription) return
+       
+       if (prescriptionOverride) setSelectedPrescription(prescriptionOverride)
+
+      setCalculatingInvoice(true)
+      setIsInvoiceOpen(true)
+      setInvoiceLines([])
+      setInvoiceAmount("")
+
       try {
-          setProcessingId(id)
-          await pharmacyService.dispensePrescription(id)
-          await loadData()
+          const lines: InvoiceLine[] = []
+          let totalStr = 0
+
+          for (const med of targetPrescription.medicines) {
+              // Default to 0 if not found
+              let unitPrice = 0
+              let found = false
+              
+              try {
+                  // Search inventory by name
+                  // Ideally we should have exact match or ID, but name search is what we have
+                  const inventoryItems = await pharmacyService.getInventory(med.name)
+                  
+                  // Find best match (exact string match case-insensitive)
+                  const match = inventoryItems.find(i => 
+                      i.medicine_name.toLowerCase() === med.name.toLowerCase()
+                  )
+                  
+                  if (match) {
+                      unitPrice = Number(match.price)
+                      found = true
+                  }
+              } catch (e) {
+                  console.error(`Failed to fetch price for ${med.name}`, e)
+              }
+
+              const qty = med.quantity || 1
+              const total = unitPrice * qty
+              
+              lines.push({
+                  name: med.name,
+                  quantity: qty,
+                  unitPrice: unitPrice,
+                  total: total,
+                  found: found
+              })
+              
+              totalStr += total
+          }
+
+          setInvoiceLines(lines)
+          setInvoiceAmount(totalStr.toFixed(2))
+
       } catch (e) {
-          alert("Failed to dispense prescription")
+          console.error("Error calculating invoice", e)
+          setInvoiceAmount("0.00")
       } finally {
-          setProcessingId(null)
+          setCalculatingInvoice(false)
       }
+  }
+
+  const handleReviewDispense = async (p: Prescription) => {
+      setSelectedPrescription(p)
+      handleOpenInvoice(p) 
   }
 
   const handleViewDetails = async (patientId: any) => {
@@ -92,32 +170,35 @@ export default function PharmacyDispensePage() {
       setIsRxDetailsOpen(true)
   }
 
-  const handleOpenInvoice = () => {
-      // Pre-calculate amount if possible (placeholder logic)
-      setInvoiceAmount("")
-      setIsInvoiceOpen(true)
-  }
-
-  const handleCreateInvoice = async () => {
+  const handleConfirmDispense = async () => {
       if (!selectedPrescription || !invoiceAmount) return
 
       try {
           setCreatingInvoice(true)
-          await billingService.createInvoice({
-              appointment_id: selectedPrescription.appointment_id,
-              patient_id: selectedPrescription.patient_id,
-              amount: parseFloat(invoiceAmount),
-              payment_method: 'cash', // Default or select
-              services: selectedPrescription.medicines.map(m => ({
-                  name: m.name,
-                  amount: 0 // We don't have individual prices yet
-              }))
-          })
-          alert("Invoice created successfully!")
+          
+          // Call dispense instead of createInvoice
+          // The backend will create the invoice
+          const response = await pharmacyService.dispensePrescription(selectedPrescription.id)
+          
+          if (response.invoice) {
+              setLastInvoiceId(response.invoice.id)
+              // Wait a brief moment for state to update if necessary, then print
+              setTimeout(() => {
+                  handlePrintInvoice()
+              }, 500)
+              
+               alert("Prescription dispensed and Invoice created! Printing Invoice...")
+          } else {
+              alert("Prescription dispensed.")
+          }
+          
           setIsInvoiceOpen(false)
+          await loadData()
+          setIsRxDetailsOpen(false) // Close details if open
+
       } catch (error) {
-          console.error("Failed to create invoice", error)
-          alert("Failed to create invoice")
+          console.error("Failed to dispense", error)
+          alert("Failed to dispense prescription")
       } finally {
           setCreatingInvoice(false)
       }
@@ -246,7 +327,7 @@ export default function PharmacyDispensePage() {
                                     <Button 
                                         size="sm" 
                                         className="w-full bg-teal-600 hover:bg-teal-700"
-                                        onClick={() => handleDispense(p.id)}
+                                        onClick={() => handleReviewDispense(p)}
                                         disabled={processingId === p.id}
                                     >
                                         {processingId === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Dispense"}
@@ -363,8 +444,8 @@ export default function PharmacyDispensePage() {
                                <p className="text-sm text-muted-foreground">{selectedPrescription.notes || "No notes."}</p>
                            </div>
 
-                           <Button className="w-full mt-4" onClick={handleOpenInvoice}>
-                               <DollarSign className="h-4 w-4 mr-2" /> Create Invoice
+                           <Button className="w-full mt-4" onClick={() => handleReviewDispense(selectedPrescription)}>
+                               <DollarSign className="h-4 w-4 mr-2" /> Dispense & Invoice
                            </Button>
                       </div>
                   </div>
@@ -372,33 +453,83 @@ export default function PharmacyDispensePage() {
           </DialogContent>
       </Dialog>
       
-      {/* Create Invoice Modal */}
+      {/* Create Invoice Modal -> Now "Dispense Review" */}
        <Dialog open={isInvoiceOpen} onOpenChange={setIsInvoiceOpen}>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[550px]">
               <DialogHeader>
-                  <DialogTitle>Create Invoice</DialogTitle>
+                  <DialogTitle>Confirm Dispense & Invoice</DialogTitle>
                   <DialogDescription>
-                      Enter the total amount for the medicines.
+                      Review calculated amounts before dispensing.
                   </DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="amount" className="text-right">Amount</Label>
-                      <Input 
-                          id="amount" 
-                          type="number"
-                          value={invoiceAmount} 
-                          onChange={(e) => setInvoiceAmount(e.target.value)}
-                          className="col-span-3" 
-                          placeholder="0.00"
-                      />
-                  </div>
+              
+              <div className="py-4">
+                  {calculatingInvoice ? (
+                       <div className="flex flex-col items-center justify-center p-8 space-y-2">
+                           <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+                           <p className="text-sm text-muted-foreground">Fetching prices from inventory...</p>
+                       </div>
+                  ) : (
+                      <div className="space-y-4">
+                          <div className="border rounded-md overflow-hidden">
+                              <table className="w-full text-sm">
+                                  <thead className="bg-slate-50 dark:bg-slate-900 border-b">
+                                      <tr>
+                                          <th className="px-3 py-2 text-left font-medium">Item</th>
+                                          <th className="px-3 py-2 text-right font-medium">Qty</th>
+                                          <th className="px-3 py-2 text-right font-medium">Price</th>
+                                          <th className="px-3 py-2 text-right font-medium">Total</th>
+                                      </tr>
+                                  </thead>
+                                  <tbody>
+                                      {invoiceLines.map((line, i) => (
+                                          <tr key={i} className="border-b last:border-0 hover:bg-slate-50 dark:hover:bg-slate-900/50">
+                                              <td className="px-3 py-2">
+                                                  <span>{line.name}</span>
+                                                  {!line.found && <span className="ml-2 text-[10px] text-amber-600 bg-amber-50 px-1 rounded border border-amber-200">Price not found</span>}
+                                              </td>
+                                              <td className="px-3 py-2 text-right">{line.quantity}</td>
+                                              <td className="px-3 py-2 text-right text-muted-foreground">{line.unitPrice.toFixed(2)}</td>
+                                              <td className="px-3 py-2 text-right font-medium">{line.total.toFixed(2)}</td>
+                                          </tr>
+                                      ))}
+                                      {invoiceLines.length === 0 && (
+                                          <tr><td colSpan={4} className="px-3 py-4 text-center text-muted-foreground">No medicines in prescription</td></tr>
+                                      )}
+                                  </tbody>
+                                  <tfoot className="bg-slate-50 dark:bg-slate-900 border-t font-semibold">
+                                      <tr>
+                                          <td colSpan={3} className="px-3 py-2 text-right">Total Amount</td>
+                                          <td className="px-3 py-2 text-right">{invoiceAmount}</td>
+                                      </tr>
+                                  </tfoot>
+                              </table>
+                          </div>
+                          
+                          <div className="flex items-center gap-4 justify-end">
+                              <Label htmlFor="amount" className="whitespace-nowrap">Override Total:</Label>
+                              <Input 
+                                  id="amount" 
+                                  type="number"
+                                  value={invoiceAmount} 
+                                  onChange={(e) => setInvoiceAmount(e.target.value)}
+                                  className="w-32 text-right" 
+                                  placeholder="0.00"
+                                  disabled
+                              />
+                          </div>
+                          <p className="text-xs text-muted-foreground text-right">
+                            * Total override disabled in this mode (auto-calculated by backend).
+                          </p>
+                      </div>
+                  )}
               </div>
+
               <div className="flex justify-end gap-2">
                   <Button variant="outline" onClick={() => setIsInvoiceOpen(false)}>Cancel</Button>
-                  <Button onClick={handleCreateInvoice} disabled={creatingInvoice}>
+                  <Button onClick={handleConfirmDispense} disabled={creatingInvoice || calculatingInvoice || !invoiceAmount}>
                       {creatingInvoice && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Create Invoice
+                      Confirm Dispense
                   </Button>
               </div>
           </DialogContent>
@@ -480,6 +611,64 @@ export default function PharmacyDispensePage() {
             )}
         </DialogContent>
       </Dialog>
+
+      {/* Hidden Printable Invoice */}
+      <div className="hidden">
+           <div ref={invoiceRef} className="p-8 bg-white text-black print:block">
+                <div className="flex justify-between items-start mb-8 border-b pb-4">
+                     <div>
+                         <h1 className="text-2xl font-bold uppercase tracking-wide text-gray-900">Medical Invoice</h1>
+                         <p className="text-sm text-gray-500">Invoice #{lastInvoiceId || "PENDING"}</p>
+                         <p className="text-sm text-gray-500">Date: {new Date().toLocaleDateString()}</p>
+                     </div>
+                     <div className="text-right">
+                         <h2 className="font-bold text-lg">Bajwa Hospital</h2>
+                         <p className="text-sm text-gray-600">123 Hospital Road</p>
+                         <p className="text-sm text-gray-600">City, State 12345</p>
+                         <p className="text-sm text-gray-600">Ph: (555) 123-4567</p>
+                     </div>
+                </div>
+
+                <div className="mb-8">
+                     <h3 className="text-gray-600 text-xs uppercase font-semibold mb-2">Bill To</h3>
+                     <p className="font-bold text-lg">{selectedPrescription?.Appointment?.patient?.name || "Patient"}</p>
+                     <p className="text-sm text-gray-600">ID: {selectedPrescription?.Appointment?.patient_id || "N/A"}</p>
+                     <p className="text-sm text-gray-600">{selectedPrescription?.Appointment?.patient?.contact_info}</p>
+                </div>
+
+                <table className="w-full mb-8">
+                     <thead>
+                         <tr className="border-b-2 border-gray-200">
+                             <th className="text-left py-2 font-semibold">Description</th>
+                             <th className="text-right py-2 font-semibold">Qty</th>
+                             <th className="text-right py-2 font-semibold">Unit Price</th>
+                             <th className="text-right py-2 font-semibold">Total</th>
+                         </tr>
+                     </thead>
+                     <tbody>
+                         {invoiceLines.map((line, i) => (
+                             <tr key={i} className="border-b border-gray-100">
+                                 <td className="py-2">{line.name}</td>
+                                 <td className="text-right py-2">{line.quantity}</td>
+                                 <td className="text-right py-2">${line.unitPrice.toFixed(2)}</td>
+                                 <td className="text-right py-2">${line.total.toFixed(2)}</td>
+                             </tr>
+                         ))}
+                     </tbody>
+                     <tfoot>
+                         <tr className="font-bold">
+                             <td colSpan={3} className="text-right py-4">Total Amount:</td>
+                             <td className="text-right py-4">${invoiceAmount}</td>
+                         </tr>
+                     </tfoot>
+                </table>
+
+                <div className="border-t pt-8 text-center text-sm text-gray-500">
+                     <p>Thank you for choosing Bajwa Hospital.</p>
+                     <p>This is a computer generated invoice.</p>
+                </div>
+           </div>
+      </div>
     </div>
   )
 }

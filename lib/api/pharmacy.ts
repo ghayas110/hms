@@ -5,6 +5,7 @@ import type {
     InventoryStats,
     Prescription,
     PharmacyDashboardStats,
+    Invoice,
 } from './types';
 
 export const pharmacyService = {
@@ -59,8 +60,8 @@ export const pharmacyService = {
     /**
      * Dispense a prescription
      */
-    dispensePrescription: async (id: number): Promise<{ message: string, prescription: Prescription }> => {
-        const response = await api.post<{ message: string, prescription: Prescription }>(`/pharmacy/prescriptions/${id}/dispense`);
+    dispensePrescription: async (id: number): Promise<{ message: string, prescription: Prescription, invoice: Invoice }> => {
+        const response = await api.post<{ message: string, prescription: Prescription, invoice: Invoice }>(`/pharmacy/prescriptions/${id}/dispense`);
         return response.data;
     },
     getPatientById: async (id: number): Promise<any> => {

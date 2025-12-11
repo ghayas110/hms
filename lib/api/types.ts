@@ -307,17 +307,20 @@ export interface TestRequest {
     doctor_id: number;
     test_type: string;
     status: 'pending' | 'in_progress' | 'completed';
-    result?: string;
-    requested_at: string;
+    result?: string | any; // Supports text or structured JSON
+    requested_at?: string; // Backend might not send this or send it as created_at
     completed_at?: string;
     created_at: string;
     updated_at: string;
-    patient?: Patient;
+    patient?: Patient; // camelCase from some serializers
+    Patient?: Patient; // PascalCase from Sequelize default
     doctor?: Doctor;
+    Doctor?: Doctor;
 }
 
 export interface AddTestResultRequest {
     result: string;
+    readings?: Record<string, string>;
 }
 
 // Clinical Management Types
@@ -351,10 +354,22 @@ export interface TestCategory {
     updated_at: string;
 }
 
+export interface TestParameter {
+    name: string;
+    unit?: string;
+    normal_range_min?: string; // Changed to string to handle mixed types or just be safe, or number if strictly number. User said "wbc count rbc count" which are usually numbers. But backend has "type". Let's assume number or string. The user backend code says `normal_range_min` and `max`. Let's use string to be flexible or number? 
+    // Backend definition: "parameters: { type: DataTypes.JSON, // Array of { name, unit, normal_range_min, normal_range_max, type } }"
+    // Let's stick to string for ranges to allow "10-20" or just numbers. Or wait, normal_range_min usually implies a number.
+    // Let's use string for now as it is safer for input unless we do validation.
+    normal_range_max?: string;
+    type?: string;
+}
+
 export interface TestDefinition {
     id: number;
     category_id: number;
     name: string;
+    parameters?: TestParameter[];
     created_at: string;
     updated_at: string;
 }

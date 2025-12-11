@@ -48,8 +48,8 @@ export function Sidebar({ className, role = "patient" }: SidebarProps) {
   const doctorLinks = [
     { href: "/doctor", label: "Dashboard", icon: LayoutDashboard },
     { href: "/doctor/appointments", label: "Appointments", icon: Calendar }, // Added Appointments link
-    { href: "/doctor/schedule", label: "Schedule", icon: Clock }, // Changed icon to distinguish
-    { href: "/doctor/patients", label: "Patients", icon: Users },
+    // { href: "/doctor/schedule", label: "Schedule", icon: Clock }, // Changed icon to distinguish
+    // { href: "/doctor/patients", label: "Patients", icon: Users },
     { href: "/doctor/diagnosis", label: "Diagnosis", icon: Stethoscope },
     { href: "/doctor/medicine-group", label: "Medicine Groups", icon: Pill },
     { href: "/doctor/test-category", label: "Test Categories", icon: Beaker }, // Changed to Beaker for better distinction
@@ -71,6 +71,7 @@ export function Sidebar({ className, role = "patient" }: SidebarProps) {
     { href: "/lab", label: "Dashboard", icon: LayoutDashboard },
     { href: "/lab/tests", label: "Tests", icon: TestTube },
     { href: "/lab/results", label: "Results", icon: FileText },
+    { href: "/lab/test-management", label: "Test Management", icon: Settings },
   ]
   
   let links = patientLinks

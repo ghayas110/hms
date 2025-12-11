@@ -137,7 +137,7 @@ export default function PatientDashboard() {
                                  <p className="font-medium text-sm">Appointment with Dr. {apt.doctor?.User?.username || "Unknown"}</p>
                                  <p className="text-xs text-muted-foreground">{new Date(apt.date).toLocaleDateString()} at {apt.time}</p>
                              </div>
-                             <Badge variant={apt.status === 'confirmed' || apt.status === 'approved' ? 'default' : 'secondary'}>
+                             <Badge variant={apt.status === 'scheduled' || apt.status === 'approved' ? 'default' : 'secondary'}>
                                  {apt.status}
                              </Badge>
                          </div>

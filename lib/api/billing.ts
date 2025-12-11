@@ -56,4 +56,14 @@ export const billingService = {
         });
         return response.data;
     },
+
+    /**
+     * Download invoice PDF
+     */
+    downloadInvoicePDF: async (invoiceId: number): Promise<Blob> => {
+        const response = await api.get(`/billing/invoices/${invoiceId}/pdf`, {
+            responseType: 'blob'
+        });
+        return response.data;
+    }
 };

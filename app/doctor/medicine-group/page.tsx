@@ -3,6 +3,7 @@ import { useEffect, useState } from "react"
 import { Plus, Trash2, Edit2, Check, X, Loader2, Pill } from "lucide-react"
 import { doctorService } from "@/lib/api/doctor"
 import { MedicineGroup, Medicine } from "@/lib/api/types"
+import { MedicineAutocomplete } from "@/components/ui/medicine-autocomplete"
 
 export default function MedicineGroupManagement() {
     const [groups, setGroups] = useState<MedicineGroup[]>([])
@@ -120,7 +121,13 @@ export default function MedicineGroupManagement() {
                     <div className="border p-3 rounded bg-slate-50 dark:bg-slate-900/50">
                         <label className="block text-sm font-medium mb-2">Add Medicines</label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-2">
-                            <input className="p-2 border rounded text-sm w-full" placeholder="Name" value={tempMedicine.name} onChange={e => setTempMedicine({...tempMedicine, name: e.target.value})}/>
+                            <MedicineAutocomplete 
+                                className="w-full text-sm"
+                                value={tempMedicine.name} 
+                                onChange={val => setTempMedicine({...tempMedicine, name: val})}
+                                onSelect={(item) => setTempMedicine({...tempMedicine, name: item.medicine_name})}
+                                placeholder="Name"
+                            />
                             <input className="p-2 border rounded text-sm w-full" placeholder="Dosage" value={tempMedicine.dosage} onChange={e => setTempMedicine({...tempMedicine, dosage: e.target.value})}/>
                             <input className="p-2 border rounded text-sm w-full" placeholder="Freq" value={tempMedicine.frequency} onChange={e => setTempMedicine({...tempMedicine, frequency: e.target.value})}/>
                             <div className="flex gap-1">

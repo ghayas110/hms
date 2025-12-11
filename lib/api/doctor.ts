@@ -7,7 +7,8 @@ import {
     SavedDiagnosis,
     MedicineGroup,
     TestCategory,
-    Doctor
+    Doctor,
+    InventoryItem
 } from './types';
 
 export const doctorService = {
@@ -114,6 +115,12 @@ export const doctorService = {
 
     updateTestCategory: async (id: number, data: Partial<TestCategory>) => {
         const response = await api.put<{ message: string, category: TestCategory }>(`/doctor/test-category/${id}`, data);
+        return response.data;
+    },
+
+    // Inventory
+    getInventory: async (search?: string) => {
+        const response = await api.get<InventoryItem[]>('/doctor/inventory', { params: { search } });
         return response.data;
     }
 };

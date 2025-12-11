@@ -15,6 +15,16 @@ import {
   Finding, Vitals
 } from "@/lib/api/types"
 import { useReactToPrint } from "react-to-print"
+import { MedicineAutocomplete } from "@/components/ui/medicine-autocomplete"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 
 // Step Definitions
 const steps = [
@@ -60,6 +70,10 @@ export default function PrescriptionPage({ params }: { params: Promise<{ id: str
   const [newFinding, setNewFinding] = useState<Finding>({ title: "", description: "" })
   const [newMedicine, setNewMedicine] = useState<Medicine>({ name: "", dosage: "", frequency: "", duration: "" })
   const [selectedTestCategory, setSelectedTestCategory] = useState<string>("")
+
+  // Success Modal State
+  const [successModalOpen, setSuccessModalOpen] = useState(false)
+  const [successData, setSuccessData] = useState({ title: "", message: "" })
 
   useEffect(() => {
     // Determine the ID - handling params correctly in client component (params is a promise in Next 15+ but simple object in 14/earlier types usually)
@@ -127,8 +141,11 @@ export default function PrescriptionPage({ params }: { params: Promise<{ id: str
     try {
         setSubmitting(true)
         await doctorService.createPrescription(formData)
-        alert("Prescription sent to pharmacy successfully!")
-        router.push('/doctor')
+        setSuccessData({
+            title: "Sent to Pharmacy",
+            message: "Prescription has been sent to pharmacy successfully!"
+        })
+        setSuccessModalOpen(true)
     } catch (e) {
         console.error("Failed to send to pharmacy", e)
         alert("Failed to send prescription to pharmacy")
@@ -141,8 +158,11 @@ export default function PrescriptionPage({ params }: { params: Promise<{ id: str
     try {
         setSubmitting(true)
         await doctorService.createPrescription(formData)
-        alert("Test orders sent to lab successfully!")
-        router.push('/doctor')
+        setSuccessData({
+            title: "Sent to Lab",
+            message: "Test orders have been sent to laboratory successfully!"
+        })
+        setSuccessModalOpen(true)
     } catch (e) {
         console.error("Failed to send to lab", e)
         alert("Failed to send test orders to lab")
@@ -298,11 +318,15 @@ export default function PrescriptionPage({ params }: { params: Promise<{ id: str
                     <div className="grid grid-cols-5 gap-2 items-end border p-4 rounded-lg">
                         <div className="col-span-2">
                             <label className="text-xs">Medicine Name</label>
-                            <input 
-                                className="w-full p-2 border rounded" 
+                            <MedicineAutocomplete
+                                className="w-full" 
                                 value={newMedicine.name}
-                                onChange={e => setNewMedicine({...newMedicine, name: e.target.value})}
-                                placeholder="Paracetamol"
+                                onChange={val => setNewMedicine({...newMedicine, name: val})}
+                                onSelect={(item) => {
+                                    // Optional: could set stock info or price if needed later
+                                    setNewMedicine({...newMedicine, name: item.medicine_name})
+                                }}
+                                placeholder="Search medicine (e.g. Paracetamol)"
                             />
                         </div>
                         <div>
@@ -442,7 +466,7 @@ export default function PrescriptionPage({ params }: { params: Promise<{ id: str
                                  <p className="text-sm text-slate-500 mt-1">Rx #{appointment?.id}</p>
                              </div>
                              <div className="text-right">
-                                 <h3 className="font-bold text-lg">HMS Clinic</h3>
+                                 <h3 className="font-bold text-lg">Bajwa Hospital</h3>
                                  <p className="text-xs text-slate-600">123 Health Ave</p>
                                  <p className="text-xs text-slate-600">Phone: (555) 123-4567</p>
                              </div>
@@ -691,6 +715,24 @@ export default function PrescriptionPage({ params }: { params: Promise<{ id: str
             </button>
           )}
       </div>
+      <Dialog open={successModalOpen} onOpenChange={setSuccessModalOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>{successData.title}</DialogTitle>
+                <DialogDescription>
+                    {successData.message}
+                </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+                <Button onClick={() => {
+                    setSuccessModalOpen(false)
+                    router.push('/doctor')
+                }}>
+                    Continue to Dashboard
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
