@@ -177,7 +177,7 @@ export default function LabResultsPage() {
                             <div className="grid grid-cols-2 gap-x-4 mt-1 text-slate-600">
                                 <p>ID: <span className="font-mono text-slate-900">{selectedResult.patient_id}</span></p>
                                 <p>Gender: <span className="text-slate-900">{selectedResult.Patient?.gender || "N/A"}</span></p>
-                                <p>Age: <span className="text-slate-900">{selectedResult.Patient?.age || "N/A"}</span></p>
+                                <p>Age: <span className="text-slate-900">{selectedResult.Patient?.dob ? new Date().getFullYear() - new Date(selectedResult.Patient.dob).getFullYear() : "N/A"}</span></p>
                                 <p>Phone: <span className="text-slate-900">{selectedResult.Patient?.contact_info || "N/A"}</span></p>
                             </div>
                         </div>
