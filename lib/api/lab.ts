@@ -4,6 +4,7 @@ import type {
     AddTestResultRequest,
     TestCategory,
     TestDefinition,
+    TestParameter,
 } from './types';
 
 export const labService = {
@@ -53,7 +54,7 @@ export const labService = {
         await api.delete(`/lab/test-category/${id}`);
     },
 
-    addTestDefinition: async (categoryId: number, name: string, parameters: any[]): Promise<TestDefinition> => {
+    addTestDefinition: async (categoryId: number, name: string, parameters: TestParameter[]): Promise<TestDefinition> => {
         const response = await api.post<TestDefinition>('/lab/test-definition', { category_id: categoryId, name, parameters });
         return response.data;
     },

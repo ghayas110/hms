@@ -42,7 +42,7 @@ export default function LabTestsPage() {
     setSelectedTest(test)
     
     // Check if result is existing structure
-    let existingReadings: Record<string, string> = {}
+    const existingReadings: Record<string, string> = {}
     let existingSummary = ""
 
     if (test.result) {
@@ -64,9 +64,11 @@ export default function LabTestsPage() {
                 existingSummary = test.result
             }
         } else if (typeof test.result === 'object') {
-            existingSummary = test.result.summary || ""
-             if (test.result.readings && Array.isArray(test.result.readings)) {
-                test.result.readings.forEach((r: any) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const res = test.result as any;
+            existingSummary = res.summary || ""
+             if (res.readings && Array.isArray(res.readings)) {
+                res.readings.forEach((r: any) => {
                     existingReadings[r.name] = r.value 
                 })
             }
@@ -200,9 +202,9 @@ export default function LabTestsPage() {
                         )}
                     </p>
                     {/* Simplified result preview */}
-                    {test.result && typeof test.result === 'object' && test.result.readings && (
+                    {test.result && typeof test.result === 'object' && (test.result as any).readings && (
                         <div className="mt-1 text-xs text-slate-500">
-                            {test.result.readings.length} param(s) evaluated
+                            {(test.result as any).readings.length} param(s) evaluated
                         </div>
                     )}
                     </div>

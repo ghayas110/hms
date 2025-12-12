@@ -8,7 +8,8 @@ import {
     MedicineGroup,
     TestCategory,
     Doctor,
-    InventoryItem
+    InventoryItem,
+    Medicine
 } from './types';
 
 export const doctorService = {
@@ -66,7 +67,7 @@ export const doctorService = {
         return response.data;
     },
 
-    addMedicineGroup: async (name: string, medicines: any[]) => {
+    addMedicineGroup: async (name: string, medicines: Medicine[]) => {
         const response = await api.post<MedicineGroup>('/doctor/medicine-group', { name, medicines });
         return response.data;
     },

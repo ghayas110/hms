@@ -463,7 +463,7 @@ export default function PrescriptionPage({ params }: { params: Promise<{ id: str
                          <div className="flex justify-between items-start mb-6 pb-4 border-b-2 border-teal-600">
                              <div>
                                  <h2 className="text-3xl font-bold text-teal-700">PRESCRIPTION</h2>
-                                 <p className="text-sm text-slate-500 mt-1">Rx #{appointment?.id}</p>
+                                    <p className="text-sm text-red-500 mt-1">Please ensure you&apos;ve added medicines and diagnosis.</p>
                              </div>
                              <div className="text-right">
                                  <h3 className="font-bold text-lg">Bajwa Hospital</h3>

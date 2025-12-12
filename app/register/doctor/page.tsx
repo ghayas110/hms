@@ -41,9 +41,11 @@ export default function RegisterDoctorPage() {
         })
         // Redirect to login on success
         router.push('/login?registered=true')
-    } catch (err: any) {
-        console.error("Registration failed", err)
-        setError(err.response?.data?.message || "Registration failed. Please try again.")
+    } catch (err) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const error = err as any;
+        console.error("Registration failed", error)
+        setError(error.response?.data?.message || "Registration failed. Please try again.")
     } finally {
         setSubmitting(false)
     }

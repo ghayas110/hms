@@ -6,6 +6,7 @@ import type {
     Prescription,
     PharmacyDashboardStats,
     Invoice,
+    Patient,
 } from './types';
 
 export const pharmacyService = {
@@ -64,9 +65,9 @@ export const pharmacyService = {
         const response = await api.post<{ message: string, prescription: Prescription, invoice: Invoice }>(`/pharmacy/prescriptions/${id}/dispense`);
         return response.data;
     },
-    getPatientById: async (id: number): Promise<any> => {
+    getPatientById: async (id: number): Promise<Patient> => {
         // returning any or a complex type because the structure includes nested relations (User, Appointments -> Prescriptions)
-        const response = await api.get(`/pharmacy/patients/${id}`);
+        const response = await api.get<Patient>(`/pharmacy/patients/${id}`);
         console.log(response.data)
         return response.data;
     },

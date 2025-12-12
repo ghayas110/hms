@@ -76,9 +76,11 @@ export function LoginForm({ className, ...props }: React.HTMLAttributes<HTMLDivE
         default:
           router.push('/patient')
       }
-    } catch (error: any) {
-      console.error('Login failed:', error)
-      alert(error.response?.data?.message || 'Login failed. Please check your credentials.')
+    } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const err = error as any;
+      console.error('Login failed:', err)
+      alert(err.response?.data?.message || 'Login failed. Please check your credentials.')
     } finally {
       setIsLoading(false)
     }

@@ -10,7 +10,7 @@ import { Search, Pill, User, FileText, Loader2, CheckCircle, Eye, Printer, Alert
 import { pharmacyService } from "@/lib/api/pharmacy"
 import { patientService } from "@/lib/api/patient" 
 import { billingService } from "@/lib/api/billing"
-import { Prescription, Patient, Appointment } from "@/lib/api/types"
+import { Prescription, Patient, Appointment, Medicine } from "@/lib/api/types"
 import { LogoutButton } from "@/components/auth/logout-button"
 import {
   Dialog,
@@ -38,7 +38,7 @@ export default function PharmacyDispensePage() {
   
   // Patient Details Modal State
   const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null)
-  const [patientDetails, setPatientDetails] = useState<any | null>(null)
+  const [patientDetails, setPatientDetails] = useState<Patient | null>(null)
   const [loadingPatient, setLoadingPatient] = useState(false)
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
 
@@ -150,7 +150,7 @@ export default function PharmacyDispensePage() {
       handleOpenInvoice(p) 
   }
 
-  const handleViewDetails = async (patientId: any) => {
+  const handleViewDetails = async (patientId: number) => {
       setSelectedPatientId(patientId)
       setIsDetailsOpen(true)
       setLoadingPatient(true)
@@ -319,7 +319,7 @@ export default function PharmacyDispensePage() {
                                     <Button size="sm" variant="outline" className="flex-1" onClick={() => handleViewRxDetails(p)}>
                                         <Eye className="h-4 w-4 mr-2" /> View Rx
                                     </Button>
-                                    <Button size="sm" variant="outline" className="flex-1" onClick={() => handleViewDetails(pId)}>
+                                    <Button size="sm" variant="outline" className="flex-1" onClick={() => typeof pId === 'number' && handleViewDetails(pId)} disabled={typeof pId !== 'number'}>
                                         <User className="h-4 w-4 mr-2" /> History
                                     </Button>
                                 </div>
@@ -574,17 +574,17 @@ export default function PharmacyDispensePage() {
                             <FileText className="h-5 w-5" /> Recent History
                         </h3>
                         <div className="space-y-3">
-                            {(patientDetails.Appointments || []).map((apt: any) => (
+                            {(patientDetails.Appointments || []).map((apt: Appointment) => (
                                 <div key={apt.id} className="border rounded-md p-3">
                                     <div className="flex justify-between items-center mb-2">
                                         <span className="font-medium text-sm">Appointment on {formatDate(apt.date)}</span>
                                         <Badge variant="outline" className="text-xs">{apt.status}</Badge>
                                     </div>
-                                    {(apt.Prescriptions || []).map((rx: any) => (
+                                    {(apt.Prescriptions || []).map((rx: Prescription) => (
                                         <div key={rx.id} className="border p-2 rounded text-sm mt-2">
                                             <div className="font-semibold text-xs mb-1 text-muted-foreground">RX-{rx.id} - {rx.status}</div>
                                             <div className="flex flex-wrap gap-1">
-                                                {(rx.medicines || []).map((m: any, idx: number) => (
+                                                {(rx.medicines || []).map((m: Medicine, idx: number) => (
                                                     <span key={idx} className="bg-white dark:bg-slate-800 px-2 py-1 rounded border text-xs">
                                                         {m.name} ({m.quantity || 1})
                                                     </span>

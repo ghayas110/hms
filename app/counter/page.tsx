@@ -83,6 +83,7 @@ export default function CounterDashboard() {
                             {searchResult.name}
                         </h3>
                         <p className="text-sm text-slate-500">{searchResult.email}</p>
+                        <p className="text-xl text-slate-600 dark:text-slate-300">Wait for the cashier&apos;s confirmation.</p>
                         <p className="text-xs text-slate-400 mt-1">ID: {searchResult.id}</p>
                     </div>
                     <div className="flex gap-2">

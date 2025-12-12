@@ -70,9 +70,9 @@ export const patientService = {
         return response.data;
     },
 
-    getPatientById: async (id: number): Promise<any> => {
+    getPatientById: async (id: number): Promise<Patient> => {
         // returning any or a complex type because the structure includes nested relations (User, Appointments -> Prescriptions)
-        const response = await api.get(`/patients/${id}`);
+        const response = await api.get<Patient>(`/patients/${id}`);
         return response.data;
     }
 

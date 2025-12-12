@@ -3,6 +3,7 @@ import type {
     Invoice,
     CreateInvoiceRequest,
     Payment,
+    Appointment,
 } from './types';
 
 export const billingService = {
@@ -15,7 +16,7 @@ export const billingService = {
         if (params?.limit) queryParams.append('limit', params.limit.toString());
         if (params?.search) queryParams.append('search', params.search);
 
-        const response = await api.get<any>(`/billing/invoices?${queryParams.toString()}`);
+        const response = await api.get<any>(`/billing/invoices?${queryParams.toString()}`); // eslint-disable-line @typescript-eslint/no-explicit-any
         console.log(response.data, "getAllInvoices");
 
         // Handle both paginated and non-paginated responses
@@ -33,7 +34,7 @@ export const billingService = {
     },
 
     getAppointments: async () => {
-        const response = await api.get<any[]>('/billing/appointments');
+        const response = await api.get<Appointment[]>('/billing/appointments');
         console.log(response.data, "getAppointments");
         return response.data;
     },

@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+
 import { 
     LayoutDashboard, Calendar, FileText, User, Settings, LogOut, 
-    Users, Activity, Stethoscope, Pill, TestTube, ChevronLeft, ChevronRight,
-    Beaker, ClipboardList, ShoppingBag, CreditCard, Clock
+    Users, Stethoscope, Pill, TestTube, ChevronLeft, ChevronRight,
+    Beaker, ClipboardList, ShoppingBag, CreditCard
 } from "lucide-react"
 import { authService } from "@/lib/api/auth"
 
@@ -21,7 +22,7 @@ export function Sidebar({ className, role = "patient" }: SidebarProps) {
 
   // Avoid hydration mismatch
   useEffect(() => {
-    setMounted(true)
+    setMounted(true) // eslint-disable-line react-hooks/set-state-in-effect
     const saved = localStorage.getItem("sidebarCollapsed")
     if (saved) setIsCollapsed(saved === "true")
   }, [])

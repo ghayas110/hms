@@ -33,6 +33,7 @@ export interface Patient extends User {
     policy_number?: string;
     group_number?: string;
     User?: User;
+    Appointments?: Appointment[];
 }
 
 export interface UpdateProfileRequest {
@@ -149,6 +150,7 @@ export interface Appointment {
     doctor?: Doctor;
     Doctor?: Doctor;
     prescriptions?: Prescription[];
+    Prescriptions?: Prescription[];
 }
 
 export interface CreateAppointmentRequest {
@@ -307,7 +309,7 @@ export interface TestRequest {
     doctor_id: number;
     test_type: string;
     status: 'pending' | 'in_progress' | 'completed';
-    result?: string | any; // Supports text or structured JSON
+    result?: string | unknown; // Supports text or structured JSON
     requested_at?: string; // Backend might not send this or send it as created_at
     completed_at?: string;
     created_at: string;

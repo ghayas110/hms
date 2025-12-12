@@ -80,7 +80,7 @@ export default function DoctorSchedulePage() {
                     </div>
                     <div>
                       <p className="font-medium">{apt.patient}</p>
-                      <p className="text-sm text-muted-foreground">{apt.type}</p>
+                        <p className="text-sm text-muted-foreground">{apt.type}</p>
                     </div>
                   </div>
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${

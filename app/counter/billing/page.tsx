@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { DollarSign, Receipt, Users, TrendingUp, Plus, Loader2, CreditCard, Banknote, X, Search, ChevronLeft, ChevronRight } from "lucide-react"
 import { billingService } from "@/lib/api/billing"
-import { Invoice } from "@/lib/api/types"
+import { Invoice, Appointment, InvoiceService } from "@/lib/api/types"
 import jsPDF from "jspdf"
 import html2canvas from "html2canvas"
 
@@ -14,13 +14,18 @@ const formatDate = (dateStr: string) => {
     return isNaN(d.getTime()) ? "N/A" : d.toLocaleDateString()
 }
 
+interface EnrichedAppointment extends Appointment {
+    patient_name: string;
+    doctor_name: string;
+}
+
 export default function CounterBillingPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([])
   // ... (keep state same)
   const [loading, setLoading] = useState(true)
-  const [appointments, setAppointments] = useState<any[]>([])
+  const [appointments, setAppointments] = useState<EnrichedAppointment[]>([])
   const [showCreateDialog, setShowCreateDialog] = useState(false)
-  const [selectedAppointment, setSelectedAppointment] = useState<any>(null)
+  const [selectedAppointment, setSelectedAppointment] = useState<EnrichedAppointment | null>(null)
   const [processingId, setProcessingId] = useState<number | null>(null)
   
   // Pagination State
@@ -58,10 +63,10 @@ export default function CounterBillingPage() {
           search: searchQuery
         })
         
-        setInvoices(invoicesResponse.data?.map((i: any) => ({
+        setInvoices(invoicesResponse.data?.map((i: Invoice) => ({
              ...i,
              created_at: i.createdAt || i.created_at, // Handle potential casing diff
-             doctor_name: i.Appointment?.Doctor?.User?.username || i.Appointment?.Doctor?.name || (i.Appointment ? "Unknown" : null)
+             doctor_name: i.Appointment?.Doctor?.User?.username || (i.Appointment ? "Unknown" : undefined)
         })) || [])
         setTotalInvoices(invoicesResponse.total || 0)
         setTotalPages(invoicesResponse.totalPages || 1)
@@ -71,10 +76,10 @@ export default function CounterBillingPage() {
 
       try {
         const appointmentsData = await billingService.getAppointments()
-        setAppointments(appointmentsData?.map((a: any) => ({
+        setAppointments(appointmentsData?.map((a: Appointment) => ({
             ...a,
             patient_name: a.Patient?.name || a.Patient?.User?.username || "Unknown",
-            doctor_name: a.Doctor?.name || a.Doctor?.User?.username || "Unknown"
+            doctor_name: a.Doctor?.User?.username || "Unknown"
         })) || [])
       } catch (e) {
         console.error("Failed to load appointments", e)
@@ -255,7 +260,7 @@ export default function CounterBillingPage() {
                                     className="w-full p-2 border rounded dark:bg-slate-900 dark:border-slate-800"
                                     onChange={e => {
                                         const apt = appointments.find(a => a.id === parseInt(e.target.value))
-                                        setSelectedAppointment(apt)
+                                        setSelectedAppointment(apt || null)
                                     }}
                                 >
                                     <option value="">Select Appointment...</option>
@@ -459,7 +464,7 @@ export default function CounterBillingPage() {
                         If services are stored as JSON in backend, they might be in invoice.services. 
                         Adjusting type/render based on assumption it's an array of objects.
                      */}
-                    {(Array.isArray(invoice.services) && invoice.services.length > 0) ? invoice.services.map((service : any, index: number) => (
+                    {(Array.isArray(invoice.services) && invoice.services.length > 0) ? invoice.services.map((service : InvoiceService, index: number) => (
                       <div key={index} className="flex justify-between text-sm">
                         <span>{service.name}</span>
                         <span className="font-medium">${Number(service.amount).toFixed(2)}</span>

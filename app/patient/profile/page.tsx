@@ -162,7 +162,7 @@ export default function PatientProfilePage() {
                 <div className="grid gap-2">
                   <label className="text-sm text-slate-500">Gender</label>
                     {isEditing ? (
-                        <Select value={editedPatient.gender} onValueChange={(val: any) => handleInputChange('gender', val)}>
+                        <Select value={editedPatient.gender} onValueChange={(val: string) => handleInputChange('gender', val)}>
                              <SelectTrigger>
                                 <SelectValue placeholder="Select gender" />
                              </SelectTrigger>
