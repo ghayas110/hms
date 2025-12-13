@@ -39,7 +39,7 @@ const steps = [
   { id: 9, title: 'Prescription', icon: FileText },
 ]
 
-const safeParseArray = <T>(data: any): T[] => {
+const safeParseArray = <T,>(data: any): T[] => {
     if (!data) return []
     if (Array.isArray(data)) return data
     if (typeof data === 'string') {
