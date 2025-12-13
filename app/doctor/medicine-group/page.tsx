@@ -5,6 +5,20 @@ import { doctorService } from "@/lib/api/doctor"
 import { MedicineGroup, Medicine } from "@/lib/api/types"
 import { MedicineAutocomplete } from "@/components/ui/medicine-autocomplete"
 
+const safeParseArray = <T,>(data: any): T[] => {
+    if (!data) return []
+    if (Array.isArray(data)) return data
+    if (typeof data === 'string') {
+        try {
+            const parsed = JSON.parse(data)
+            return Array.isArray(parsed) ? parsed : []
+        } catch {
+            return []
+        }
+    }
+    return []
+}
+
 export default function MedicineGroupManagement() {
     const [groups, setGroups] = useState<MedicineGroup[]>([])
     const [loading, setLoading] = useState(true)
@@ -63,7 +77,15 @@ export default function MedicineGroupManagement() {
             setNewGroupName("")
             setNewGroupMedicines([])
             await loadData()
-        } catch (e) {
+        } catch (e: any) {
+            // Handle 404 gracefully - maybe it was already deleted by someone else
+            if (e.response && e.response.status === 404) {
+                alert("This group no longer exists. It may have been deleted already.")
+                setShowAddForm(false)
+                setEditingId(null)
+                await loadData()
+                return
+            }
             console.error(e)
             alert("Failed to save medicine group")
         } finally {
@@ -74,7 +96,7 @@ export default function MedicineGroupManagement() {
     const handleEdit = (group: MedicineGroup) => {
         setEditingId(group.id)
         setNewGroupName(group.name)
-        setNewGroupMedicines(group.medicines)
+        setNewGroupMedicines(safeParseArray(group.medicines))
         setShowAddForm(true)
     }
 
@@ -83,7 +105,12 @@ export default function MedicineGroupManagement() {
         try {
             await doctorService.deleteMedicineGroup(id)
             await loadData()
-        } catch (e) {
+        } catch (e: any) {
+            if (e.response && e.response.status === 404) {
+                 // Already deleted, just clean up local state
+                 await loadData()
+                 return
+            }
             console.error(e)
             alert("Failed to delete medicine group")
         }
@@ -137,7 +164,7 @@ export default function MedicineGroupManagement() {
                         </div>
                         
                         <div className="space-y-1">
-                            {newGroupMedicines.map((m, i) => (
+                            {safeParseArray<Medicine>(newGroupMedicines).map((m, i) => (
                                 <div key={i} className="flex justify-between items-center text-sm p-2 bg-white dark:bg-slate-950 border rounded">
                                     <span>{m.name} - {m.dosage} - {m.frequency} ({m.duration})</span>
                                     <button onClick={() => removeMedicineFromNewGroup(i)} className="text-red-500"><X size={14}/></button>
@@ -183,7 +210,7 @@ export default function MedicineGroupManagement() {
                                 </div>
                              </div>
                              <div className="flex flex-wrap gap-2">
-                                {Array.isArray(g.medicines) && g.medicines.map((m: Medicine, i: number) => (
+                                {safeParseArray<Medicine>(g.medicines).map((m: Medicine, i: number) => (
                                     <span key={i} className="text-xs px-2 py-1 bg-slate-100 dark:bg-slate-900 rounded border">
                                         {m.name} ({m.dosage})
                                     </span>
