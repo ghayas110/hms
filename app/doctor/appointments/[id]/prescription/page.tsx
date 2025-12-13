@@ -39,6 +39,20 @@ const steps = [
   { id: 9, title: 'Prescription', icon: FileText },
 ]
 
+const safeParseArray = <T>(data: any): T[] => {
+    if (!data) return []
+    if (Array.isArray(data)) return data
+    if (typeof data === 'string') {
+        try {
+            const parsed = JSON.parse(data)
+            return Array.isArray(parsed) ? parsed : []
+        } catch {
+            return []
+        }
+    }
+    return []
+}
+
 export default function PrescriptionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: paramId } = use(params)
   const router = useRouter()
@@ -211,7 +225,7 @@ export default function PrescriptionPage({ params }: { params: Promise<{ id: str
                         <button 
                             onClick={() => {
                                 if (newFinding.title) {
-                                    setFormData({...formData, findings: [...formData.findings, newFinding]})
+                                    setFormData({...formData, findings: [...safeParseArray<Finding>(formData.findings), newFinding]})
                                     setNewFinding({title: "", description: ""})
                                 }
                             }}
@@ -222,13 +236,13 @@ export default function PrescriptionPage({ params }: { params: Promise<{ id: str
                      </div>
                      
                      <div className="space-y-2 mt-4">
-                        {formData.findings.map((f, i) => (
+                        {safeParseArray<Finding>(formData.findings).map((f, i) => (
                             <div key={i} className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-900 rounded">
                                 <div>
                                     <span className="font-semibold">{f.title}:</span> {f.description}
                                 </div>
                                 <button onClick={() => {
-                                    const newF = [...formData.findings]
+                                    const newF = [...safeParseArray<Finding>(formData.findings)]
                                     newF.splice(i, 1)
                                     setFormData({...formData, findings: newF})
                                 }} className="text-red-500"><X size={16}/></button>
@@ -244,8 +258,8 @@ export default function PrescriptionPage({ params }: { params: Promise<{ id: str
                          <select 
                             className="flex-1 p-2 rounded border border-slate-200 dark:border-slate-800 dark:bg-slate-900"
                             onChange={e => {
-                                if (e.target.value && !formData.diagnosis.includes(e.target.value)) {
-                                    setFormData({...formData, diagnosis: [...formData.diagnosis, e.target.value]})
+                                if (e.target.value && !safeParseArray<string>(formData.diagnosis).includes(e.target.value)) {
+                                    setFormData({...formData, diagnosis: [...safeParseArray<string>(formData.diagnosis), e.target.value]})
                                 }
                             }}
                             value=""
@@ -257,11 +271,11 @@ export default function PrescriptionPage({ params }: { params: Promise<{ id: str
                     </div>
                     
                     <div className="flex flex-wrap gap-2 mt-4">
-                        {formData.diagnosis.map((d, i) => (
+                        {safeParseArray<string>(formData.diagnosis).map((d, i) => (
                             <span key={i} className="px-3 py-1 bg-teal-100 text-teal-800 rounded-full flex items-center gap-2">
                                 {d}
                                 <button onClick={() => {
-                                     const newD = [...formData.diagnosis]
+                                     const newD = [...safeParseArray<string>(formData.diagnosis)]
                                      newD.splice(i, 1)
                                      setFormData({...formData, diagnosis: newD})
                                 }}><X size={14}/></button>
@@ -304,7 +318,7 @@ export default function PrescriptionPage({ params }: { params: Promise<{ id: str
                                         // Merge medicines
                                         setFormData({
                                             ...formData, 
-                                            medicines: [...formData.medicines, ...g.medicines]
+                                            medicines: [...safeParseArray<Medicine>(formData.medicines), ...g.medicines]
                                         })
                                     }}
                                     className="px-3 py-1 bg-white dark:bg-slate-800 border rounded text-xs hover:bg-slate-50"
@@ -350,7 +364,7 @@ export default function PrescriptionPage({ params }: { params: Promise<{ id: str
                         <button 
                              onClick={() => {
                                  if (newMedicine.name) {
-                                     setFormData({...formData, medicines: [...formData.medicines, newMedicine]})
+                                     setFormData({...formData, medicines: [...safeParseArray<Medicine>(formData.medicines), newMedicine]})
                                      setNewMedicine({name:"", dosage:"", frequency:"", duration:""})
                                  }
                              }}
@@ -361,14 +375,14 @@ export default function PrescriptionPage({ params }: { params: Promise<{ id: str
                     </div>
 
                     <div className="space-y-2">
-                        {formData.medicines.map((m, i) => (
+                        {safeParseArray<Medicine>(formData.medicines).map((m, i) => (
                             <div key={i} className="flex justify-between items-center p-3 bg-white dark:bg-slate-950 border rounded shadow-sm">
                                 <div>
                                     <div className="font-medium">{m.name}</div>
                                     <div className="text-xs text-slate-500">{m.dosage} | {m.frequency} | {m.duration}</div>
                                 </div>
                                 <button onClick={() => {
-                                     const newM = [...formData.medicines]
+                                     const newM = [...safeParseArray<Medicine>(formData.medicines)]
                                      newM.splice(i, 1)
                                      setFormData({...formData, medicines: newM})
                                 }} className="text-red-500"><X size={16}/></button>
@@ -404,12 +418,12 @@ export default function PrescriptionPage({ params }: { params: Promise<{ id: str
                                      <label key={t.id} className="flex items-center gap-2 p-2 hover:bg-slate-50 dark:hover:bg-slate-900 rounded cursor-pointer">
                                          <input 
                                             type="checkbox"
-                                            checked={formData.test_orders.includes(t.name)}
+                                            checked={safeParseArray<string>(formData.test_orders).includes(t.name)}
                                             onChange={e => {
                                                 if (e.target.checked) {
-                                                    setFormData({...formData, test_orders: [...formData.test_orders, t.name]})
+                                                    setFormData({...formData, test_orders: [...safeParseArray<string>(formData.test_orders), t.name]})
                                                 } else {
-                                                    setFormData({...formData, test_orders: formData.test_orders.filter(xn => xn !== t.name)})
+                                                    setFormData({...formData, test_orders: safeParseArray<string>(formData.test_orders).filter(xn => xn !== t.name)})
                                                 }
                                             }}
                                          />
@@ -423,7 +437,7 @@ export default function PrescriptionPage({ params }: { params: Promise<{ id: str
                      <div className="mt-4">
                         <h4 className="font-medium text-sm mb-2">Selected Tests:</h4>
                         <ul className="list-disc pl-5 text-sm">
-                            {formData.test_orders.map((t, i) => <li key={i}>{t}</li>)}
+                            {safeParseArray<string>(formData.test_orders).map((t, i) => <li key={i}>{t}</li>)}
                         </ul>
                      </div>
                  </div>
@@ -540,13 +554,13 @@ export default function PrescriptionPage({ params }: { params: Promise<{ id: str
                          )}
                          
                          {/* Diagnosis */}
-                         {formData.diagnosis.length > 0 && (
+                         {safeParseArray<string>(formData.diagnosis).length > 0 && (
                              <div className="mb-4">
                                  <h4 className="font-semibold text-sm text-teal-700 mb-2 flex items-center gap-2">
                                      <Stethoscope size={16} /> Diagnosis
                                  </h4>
                                  <div className="flex flex-wrap gap-2">
-                                     {formData.diagnosis.map((d, i) => (
+                                     {safeParseArray<string>(formData.diagnosis).map((d, i) => (
                                          <span key={i} className="px-3 py-1 bg-teal-50 text-teal-800 dark:bg-teal-900 dark:text-teal-100 rounded-full text-xs font-medium">
                                              {d}
                                          </span>
@@ -556,13 +570,13 @@ export default function PrescriptionPage({ params }: { params: Promise<{ id: str
                          )}
                          
                          {/* Medicines */}
-                         {formData.medicines.length > 0 && (
+                         {safeParseArray<Medicine>(formData.medicines).length > 0 && (
                              <div className="mb-4">
                                  <h4 className="font-semibold text-sm text-teal-700 mb-2 flex items-center gap-2">
                                      <Pill size={16} /> Medicines
                                  </h4>
                                  <div className="space-y-2">
-                                     {formData.medicines.map((m, i) => (
+                                     {safeParseArray<Medicine>(formData.medicines).map((m, i) => (
                                          <div key={i} className="border-l-2 border-teal-600 pl-3 py-1">
                                              <p className="font-medium text-sm">{i + 1}. {m.name}</p>
                                              <p className="text-xs text-slate-600">
@@ -575,13 +589,13 @@ export default function PrescriptionPage({ params }: { params: Promise<{ id: str
                          )}
                          
                          {/* Test Orders */}
-                         {formData.test_orders.length > 0 && (
+                         {safeParseArray<string>(formData.test_orders).length > 0 && (
                              <div className="mb-4">
                                  <h4 className="font-semibold text-sm text-teal-700 mb-2 flex items-center gap-2">
                                      <TestTube size={16} /> Laboratory Tests
                                  </h4>
                                  <ul className="list-disc list-inside text-sm space-y-1">
-                                     {formData.test_orders.map((t, i) => (
+                                     {safeParseArray<string>(formData.test_orders).map((t, i) => (
                                          <li key={i} className="text-slate-700 dark:text-slate-300">{t}</li>
                                      ))}
                                  </ul>

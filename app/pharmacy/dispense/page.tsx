@@ -30,6 +30,23 @@ interface InvoiceLine {
     found: boolean;
 }
 
+const safeParseArray = <T>(data: any): T[] => {
+    if (!data) return []
+    if (Array.isArray(data)) return data
+    if (typeof data === 'string') {
+        try {
+            const parsed = JSON.parse(data)
+            return Array.isArray(parsed) ? parsed : []
+        } catch {
+            return []
+        }
+    }
+    return []
+}
+
+// Backward compatibility or alias if preferred, but better to use generic name
+const parseMedicines = (d: any) => safeParseArray<Medicine>(d)
+
 export default function PharmacyDispensePage() {
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([])
   const [loading, setLoading] = useState(true)
@@ -97,7 +114,8 @@ export default function PharmacyDispensePage() {
           const lines: InvoiceLine[] = []
           let totalStr = 0
 
-          for (const med of targetPrescription.medicines) {
+          const medicines = parseMedicines(targetPrescription.medicines)
+          for (const med of medicines) {
               // Default to 0 if not found
               let unitPrice = 0
               let found = false
@@ -306,7 +324,7 @@ export default function PharmacyDispensePage() {
                                         <div>
                                             <Label className="text-xs text-muted-foreground mb-1 block">Medicines</Label>
                                             <div className="flex flex-wrap gap-1">
-                                                {(p.medicines || []).map((m, i) => (
+                                                {parseMedicines(p.medicines).map((m, i) => (
                                                     <Badge key={i} variant="secondary" className="text-xs">
                                                         {m.name} ({m.quantity || 1})
                                                     </Badge>
@@ -377,8 +395,8 @@ export default function PharmacyDispensePage() {
                                   <div>
                                       <span className="font-medium text-muted-foreground text-xs uppercase">Diagnosis</span>
                                       <div className="flex flex-wrap gap-1 mt-1">
-                                          {selectedPrescription.diagnosis?.length ? (
-                                              selectedPrescription.diagnosis.map((d, i) => (
+                                          {safeParseArray<string>(selectedPrescription.diagnosis).length ? (
+                                              safeParseArray<string>(selectedPrescription.diagnosis).map((d, i) => (
                                                   <Badge key={i} variant="outline">{d}</Badge>
                                               ))
                                           ) : <span className="text-muted-foreground italic">None recorded</span>}
@@ -390,9 +408,9 @@ export default function PharmacyDispensePage() {
                                   </div>
                                   <div className="pt-2">
                                       <span className="font-medium text-muted-foreground text-xs uppercase">Findings</span>
-                                      {selectedPrescription.findings?.length ? (
+                                      {safeParseArray<any>(selectedPrescription.findings).length ? (
                                           <ul className="list-disc list-inside mt-1">
-                                              {selectedPrescription.findings.map((f, i) => (
+                                              {safeParseArray<any>(selectedPrescription.findings).map((f, i) => (
                                                   <li key={i}>{f.title}: {f.description}</li>
                                               ))}
                                           </ul>
@@ -426,7 +444,7 @@ export default function PharmacyDispensePage() {
                                   <Pill className="h-4 w-4" /> Medicines
                               </h3>
                               <div className="space-y-3">
-                                  {selectedPrescription.medicines.map((m, i) => (
+                                  {parseMedicines(selectedPrescription.medicines).map((m, i) => (
                                       <div key={i} className="flex justify-between items-start text-sm border-b last:border-0 pb-2 last:pb-0">
                                           <div>
                                               <p className="font-medium">{m.name}</p>
@@ -584,7 +602,7 @@ export default function PharmacyDispensePage() {
                                         <div key={rx.id} className="border p-2 rounded text-sm mt-2">
                                             <div className="font-semibold text-xs mb-1 text-muted-foreground">RX-{rx.id} - {rx.status}</div>
                                             <div className="flex flex-wrap gap-1">
-                                                {(rx.medicines || []).map((m: Medicine, idx: number) => (
+                                                {parseMedicines(rx.medicines).map((m: Medicine, idx: number) => (
                                                     <span key={idx} className="bg-white dark:bg-slate-800 px-2 py-1 rounded border text-xs">
                                                         {m.name} ({m.quantity || 1})
                                                     </span>
